@@ -4,7 +4,7 @@ TeleaquaH4Z 的 ROS 2 仿真工作区，面向 PX4 + Gazebo 场景，提供空/�
 
 ## 项目简介
 
-本仓库用于承载 TeleaquaH4Z 在 ROS 2 侧的核心功能，当前重点是：
+本仓库用于承载 TeleaquaH4Z 在 ROS 2 侧的核心功能，重点是：
 - 基于状态机的空中/水下模式切换管理
 - 机械臂展开/收拢与 PX4 模式切换联动
 - ROS 2 与 Gazebo 话题桥接（轨迹、关节状态、过渡状态、相机、位姿）
@@ -24,30 +24,39 @@ ros2_ws/
 |- src/
 |  |- teleh4z_manager/     # 模式切换管理节点（Python）
 |  `- px4_msgs/            # PX4 ROS 2 消息定义包
-|- build/                  # colcon 构建产物（没有加入版本控制）
-|- install/                # colcon 安装产物（没有加入版本控制）
-`- log/                    # colcon 日志（没有加入版本控制）
+|- build/                  # colcon 构建产物
+|- install/                # colcon 安装产物
+`- log/                    # colcon 日志
 ```
 
 ## 环境依赖
 
-- ROS 2（Humble）
-- PX4 SITL （这里加入docker image镜像链接）
-- Gazebo （Harmonic）
+拉取DockerHub镜像：
+```bash
+docker pull zyshine3/px4-h4z-dev:latest
+```
+
+需要将本仓库挂载到容器内 `/home/user/ros2_ws`,完整的基础环境构建流程见：
+
+https://github.com/TeleLoong/teleaqua-resources.git 中的`环境搭建指南.md`
 
 ## 快速开始
 
-### 1) 构建
+#### 1) 构建
+
+在容器中
 
 ```bash
+cd /home/user/ros2_ws
 colcon build --symlink-install
 ```
-### 2) 加载环境
+
+#### 2) 加载环境
 
 ```bash
 source install/setup.bash
 ```
-### 3) 启动模式管理与桥接
+#### 3) 启动模式管理与桥接
 
 ```bash
 ros2 launch teleh4z_manager mode_manager.launch.py
@@ -63,12 +72,6 @@ ros2 topic pub /teleh4z/mode_request std_msgs/msg/String "{data: 'air'}" -1
 # 切换到 WATER
 ros2 topic pub /teleh4z/mode_request std_msgs/msg/String "{data: 'water'}" -1
 ```
-## 关键话题
-
-- 输入：`/teleh4z/mode_request`（std_msgs/String）
-- PX4 状态订阅：`/fmu/out/vehicle_air_water_status`
-- PX4 设定发布：`/fmu/in/vehicle_air_water_status_setpoint`
-- 机械臂轨迹发布：`/arm_trajectory`
 
 ## 可配置参数
 
