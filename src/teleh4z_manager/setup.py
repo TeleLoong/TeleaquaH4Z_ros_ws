@@ -24,6 +24,8 @@ setup(
     entry_points={
         'console_scripts': [
             'mode_manager = teleh4z_manager.mode_manager:main',
+            'water_thruster_commander = teleh4z_manager.water_thruster_commander:main',
+            'water_thruster_replay = teleh4z_manager.water_thruster_replay:main',
         ],
     },
 )
