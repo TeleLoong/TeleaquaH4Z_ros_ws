@@ -1,0 +1,279 @@
+#!/bin/sh
+# @name TeleH4Z Digital Twin (Gazebo Harmonic)
+# @type Custom Hyper Multicopter-UUV
+# @class Underwater Robot
+#
+# 物理对标: 5.0kg, 3115 KV900 (15140 RPM Max)
+# 仿真对标: 悬停油门 40%
+#
+
+. ${R}etc/init.d/rc.mc_defaults # 继承多旋翼默认集，尤其是 VEHICLE_TYPE=mc 和一批 MC 默认参数（/home/user/PX4-Autopilot/ROMFS/px4fmu_common/init.d/rc.mc_defaults）
+
+PX4_SIMULATOR=${PX4_SIMULATOR:=gz}
+PX4_GZ_WORLD=${PX4_GZ_WORLD:=default}
+PX4_SIM_MODEL=${PX4_SIM_MODEL:=teleh4z}
+# TeleH4Z runtime identity: PX4_SIM_MODEL=teleh4z
+
+# TeleH4Z baseline boot semantics:
+# - default startup mode is water
+# - default arm joints are retracted at 0/0
+# (mode-switch deployment logic is intentionally deferred to later tasks)
+TELEH4Z_BOOT_MODE=${TELEH4Z_BOOT_MODE:=water}
+TELEH4Z_ARM_LEFT_JOINT=${TELEH4Z_ARM_LEFT_JOINT:=0}
+TELEH4Z_ARM_RIGHT_JOINT=${TELEH4Z_ARM_RIGHT_JOINT:=0}
+
+
+param set-default SIM_GZ_EN 1 # 开启 Gazebo 执行器输出组，让 SIM_GZ_EC_* / SIM_GZ_SV_* 这套映射参数生效，将这些通道映射到Gazebo消息
+
+# =========================================================
+# 1. 基础物理与电池配置 (6S)
+# =========================================================
+param set-default BAT1_N_CELLS 6  # 6S 电池配置
+param set-default BAT1_V_CHARGED 25.20 # 满电电压
+param set-default BAT1_V_EMPTY 21.60 # 空电电压
+
+# 禁用电调校验 (仿真不需要)
+param set-default COM_ARM_CHK_ESCS 0 
+param set-default FD_ESCS_EN 0
+param set-default COM_PREARM_MODE 1 
+
+# Z-axis SITL runs without QGC/manual pilot and starts underwater, so the
+# normal GPS/GCS preflight gates are relaxed for this experiment.
+param set COM_ARM_WO_GPS 1
+param set NAV_DLL_ACT 0
+param set CBRK_SUPPLY_CHK 894281
+param set EKF2_REQ_EPH 100
+param set EKF2_REQ_EPV 100
+param set EKF2_REQ_SACC 100
+param set EKF2_REQ_HDRIFT 100
+param set EKF2_REQ_VDRIFT 100
+
+# =========================================================
+# 2. 控制分配器几何 (Control Allocator)
+# CA_AIRFRAME=9 强制使用自定义几何，防止被系统默认值覆盖
+# =========================================================
+param set-default CA_AIRFRAME 9 # 9 = Custom 强制使用自定义几何配置
+param set-default CA_ROTOR_COUNT 8 # 总推进器数量 (4个空推 + 4个水下推进器)
+param set-default CA_R_REV 240 # 定义哪几个电机可以反转，位掩码 5-8 号电机可反转
+param set-default CA_MC_NUM_R 4 # 空推电机数量
+param set-default CA_UUV_NUM_R 4 # 水下推进器数量
+param set-default MAV_TYPE 14
+# MAV_TYPE 就是 MAVLink HEARTBEAT.type，告诉 QGC、ROS/MAVSDK、地面站“我是什么类型的飞行器”。它主要影响“对外身份”，比如图标、识别类型、某些外部逻辑分支，不决定 PX4 内部启动哪套控制器。
+
+# --- 空推电机 0-3 (Quad-X) ---
+
+# Motor 1 (right-front, CCW)
+param set-default CA_ROTOR0_PX 0.1000
+param set-default CA_ROTOR0_PY 0.1283
+param set-default CA_ROTOR0_PZ -0.0660
+param set-default CA_ROTOR0_AX 0.0
+param set-default CA_ROTOR0_AY 0.0
+param set-default CA_ROTOR0_AZ -1.0
+param set-default CA_ROTOR0_CT 41.2
+param set-default CA_ROTOR0_KM 0.0177
+
+# Motor 2 (left-front, CW)
+param set-default CA_ROTOR1_PX 0.1000
+param set-default CA_ROTOR1_PY -0.1283
+param set-default CA_ROTOR1_PZ -0.0660
+param set-default CA_ROTOR1_AX 0.0
+param set-default CA_ROTOR1_AY 0.0
+param set-default CA_ROTOR1_AZ -1.0
+param set-default CA_ROTOR1_CT 41.2
+param set-default CA_ROTOR1_KM -0.0177
+
+# Motor 3 (left-back, CCW)
+param set-default CA_ROTOR2_PX -0.0920
+param set-default CA_ROTOR2_PY -0.1283
+param set-default CA_ROTOR2_PZ -0.0660
+param set-default CA_ROTOR2_AX 0.0
+param set-default CA_ROTOR2_AY 0.0
+param set-default CA_ROTOR2_AZ -1.0
+param set-default CA_ROTOR2_CT 41.2
+param set-default CA_ROTOR2_KM 0.0177
+
+# Motor 4 (right-back, CW)
+param set-default CA_ROTOR3_PX -0.0920
+param set-default CA_ROTOR3_PY 0.1283
+param set-default CA_ROTOR3_PZ -0.0660
+param set-default CA_ROTOR3_AX 0.0
+param set-default CA_ROTOR3_AY 0.0
+param set-default CA_ROTOR3_AZ -1.0
+param set-default CA_ROTOR3_CT 41.2
+param set-default CA_ROTOR3_KM -0.0177
+
+# --- UUV Thrusters 4-7 ---
+# 坐标转换: SDF(X, Y, Z) -> PX4(X, -Y, -Z)
+# Rotor index 4 / servo_0 (Right): SDF[-0.155, -0.036, -0.007866] -> PX4[-0.155, 0.036, 0.007866]
+param set-default CA_ROTOR4_PX -0.1550
+param set-default CA_ROTOR4_PY 0.0360
+param set-default CA_ROTOR4_PZ 0.007866
+param set-default CA_ROTOR4_AX 1.0
+param set-default CA_ROTOR4_AY 0.0
+param set-default CA_ROTOR4_AZ 0.0
+param set-default CA_ROTOR4_CT 8.5
+param set-default CA_ROTOR4_KM 0.0
+
+# Rotor index 5 / servo_1 (Front): SDF[0.1139, 0, 0.04] -> PX4[0.1139, 0, -0.0400]
+param set-default CA_ROTOR5_PX 0.1139
+param set-default CA_ROTOR5_PY 0.0
+param set-default CA_ROTOR5_PZ -0.0400
+param set-default CA_ROTOR5_AX 0.0
+param set-default CA_ROTOR5_AY 0.0
+param set-default CA_ROTOR5_AZ 1.0
+param set-default CA_ROTOR5_CT 8.5
+param set-default CA_ROTOR5_KM 0.0
+
+# Rotor index 6 / servo_2 (Left): SDF[-0.155, 0.036, -0.007866] -> PX4[-0.155, -0.036, 0.007866]
+param set-default CA_ROTOR6_PX -0.1550
+param set-default CA_ROTOR6_PY -0.0360
+param set-default CA_ROTOR6_PZ 0.007866
+param set-default CA_ROTOR6_AX 1.0
+param set-default CA_ROTOR6_AY 0.0
+param set-default CA_ROTOR6_AZ 0.0
+param set-default CA_ROTOR6_CT 8.5
+param set-default CA_ROTOR6_KM 0.0
+
+# Rotor index 7 / servo_3 (Back): SDF[-0.10643, 0, 0.04] -> PX4[-0.10643, 0, -0.0400]
+param set-default CA_ROTOR7_PX -0.10643
+param set-default CA_ROTOR7_PY 0.0
+param set-default CA_ROTOR7_PZ -0.0400
+param set-default CA_ROTOR7_AX 0.0
+param set-default CA_ROTOR7_AY 0.0
+param set-default CA_ROTOR7_AZ 1.0
+param set-default CA_ROTOR7_CT 8.5
+param set-default CA_ROTOR7_KM 0.0
+# =========================================================
+# 3. 飞行控制参数 (PID & MPC) - 基于仿真调试和实机经验的初始值，后续可根据飞行表现微调
+# =========================================================
+
+# --- 姿态控制 (Attitude Control) ---
+param set-default MC_ROLL_P 6.5 
+param set-default MC_PITCH_P 6.5
+param set-default MC_YAW_P 2.8
+param set-default MC_YAW_WEIGHT 0.4 #这不是 yaw 增益，而是“在非线性姿态控制里，把 yaw 相对 roll/pitch 的优先级降下来”
+# --- 速率控制 (Rate Control) ---
+param set-default MC_ROLLRATE_P 0.15
+param set-default MC_ROLLRATE_I 0.15
+param set-default MC_ROLLRATE_D 0.003
+param set-default MC_ROLLRATE_K 1.0 # 整套 PID 的总缩放因子
+
+param set-default MC_PITCHRATE_P 0.15
+param set-default MC_PITCHRATE_I 0.20
+param set-default MC_PITCHRATE_D 0.003
+param set-default MC_PITCHRATE_K 1.0 
+
+param set-default MC_YAWRATE_P 0.20
+param set-default MC_YAWRATE_I 0.10
+param set-default MC_YAWRATE_K 1.0
+# 根据仿真调试，稍微加大最大偏航速率限制
+param set-default MC_YAWRATE_MAX 200.0 
+
+# --- 位置控制 (Position Control) ---
+# 悬停油门 40% (精确匹配 SDF)
+param set-default MPC_THR_HOVER 0.50 #悬停所需归一化推力”。意思是 PX4 认为这台机体大约 40% 推力就能悬停
+param set-default MPC_THR_MIN 0.05 # 最小总推力下限。太低会让 roll/pitch/yaw 失去控制权，所以保留 5% 底推力
+
+# 飞行手感优化 (防止窜高和过激反应)
+param set-default MPC_TILTMAX_AIR 30  # 实机是45，仿真如果太猛可改为35  空中速度/加速度控制模式下允许的最大倾角
+param set-default MPC_Z_VEL_P_ACC 3.0   # 垂向速度误差 -> 垂向加速度修正的 P 增益。值越大，高度/升降速度纠偏越猛
+param set-default MPC_XY_VEL_P_ACC 1.0  # 水平速度误差 -> 水平加速度修正”的 P 增益
+param set-default MPC_ACC_HOR 2.0       # 水平加速度能力/限制
+
+# --- 推力模型补偿 (解决偏航窜高) ---
+# 1 = 二次曲线 (Quadratic), 适配真实电机物理特性
+param set-default THR_MDL_FAC 1.0  
+
+# --- UUV 参数 ---
+param set-default UUV_ROLL_P 3.0 
+param set-default UUV_PITCH_P 3.0
+param set-default UUV_YAW_P 8.0
+param set-default UUV_X_VEL_P_ACC 0.8
+param set-default UUV_Y_VEL_P_ACC 0.8
+param set-default UUV_Z_VEL_P_ACC 4.0
+
+# =========================================================
+# 4. 仿真桥接映射 (Simulation Bridge)
+# =========================================================
+
+# 空推桥接映射 1-4
+# 对应 Gazebo `command/motor_speed` 的 motorNumber 0..3
+param set-default SIM_GZ_EC_FUNC1 101
+param set-default SIM_GZ_EC_FUNC2 102
+param set-default SIM_GZ_EC_FUNC3 103
+param set-default SIM_GZ_EC_FUNC4 104
+
+param set-default SIM_GZ_EC_MIN1 150
+param set-default SIM_GZ_EC_MIN2 150
+param set-default SIM_GZ_EC_MIN3 150
+param set-default SIM_GZ_EC_MIN4 150
+
+
+# 最大转速设为 1585 (对应 15140 RPM 实机真值)
+param set-default SIM_GZ_EC_MAX1 1585
+param set-default SIM_GZ_EC_MAX2 1585
+param set-default SIM_GZ_EC_MAX3 1585
+param set-default SIM_GZ_EC_MAX4 1585
+
+# 水下推进器桥接映射 1-4 -> servo_0..3
+param set-default SIM_GZ_SV_FUNC1 105
+param set-default SIM_GZ_SV_FUNC2 106
+param set-default SIM_GZ_SV_FUNC3 107
+param set-default SIM_GZ_SV_FUNC4 108
+param set-default SIM_GZ_SV_MINA1 1000
+param set-default SIM_GZ_SV_MAXA1 2000
+param set-default SIM_GZ_SV_DIS1 500
+param set-default SIM_GZ_SV_MINA2 1000
+param set-default SIM_GZ_SV_MAXA2 2000
+param set-default SIM_GZ_SV_DIS2 500
+param set-default SIM_GZ_SV_MINA3 1000
+param set-default SIM_GZ_SV_MAXA3 2000
+param set-default SIM_GZ_SV_DIS3 500
+param set-default SIM_GZ_SV_MINA4 1000
+param set-default SIM_GZ_SV_MAXA4 2000
+param set-default SIM_GZ_SV_DIS4 500
+
+# =========================================================
+# 5. 强制传感器伪校准 (解决 Preflight Fail)
+# =========================================================
+
+# 赋予合法身份
+param set-default CAL_ACC0_ID 1310724
+param set-default CAL_ACC0_PRIO 50
+param set-default CAL_ACC0_ROT -1
+
+param set-default CAL_GYRO0_ID 1310724
+param set-default CAL_GYRO0_PRIO 50
+param set-default CAL_GYRO0_ROT -1
+
+param set-default CAL_MAG0_ID 196612
+param set-default CAL_MAG0_PRIO 50
+param set-default CAL_MAG0_ROT -1
+
+# 归零校准偏差 (完美传感器)
+param set-default CAL_ACC0_XOFF 0.0
+param set-default CAL_ACC0_YOFF 0.0
+param set-default CAL_ACC0_ZOFF 0.0
+param set-default CAL_ACC0_XSCALE 1.0
+param set-default CAL_ACC0_YSCALE 1.0
+param set-default CAL_ACC0_ZSCALE 1.0
+
+param set-default CAL_GYRO0_XOFF 0.0
+param set-default CAL_GYRO0_YOFF 0.0
+param set-default CAL_GYRO0_ZOFF 0.0
+
+param set-default CAL_MAG0_XOFF 0.0
+param set-default CAL_MAG0_YOFF 0.0
+param set-default CAL_MAG0_ZOFF 0.0
+param set-default CAL_MAG0_XSCALE 1.0
+param set-default CAL_MAG0_YSCALE 1.0
+param set-default CAL_MAG0_ZSCALE 1.0
+
+# 禁用板级修正
+param set-default SENS_BOARD_ROT 0
+param set-default SENS_BOARD_X_OFF 0.0
+param set-default SENS_BOARD_Y_OFF 0.0
+param set-default SENS_BOARD_Z_OFF 0.0
+
+# 允许无磁力计解锁 (防止偶发错误)
+param set-default COM_ARM_MAG_ANG -1

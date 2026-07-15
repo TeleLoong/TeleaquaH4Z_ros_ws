@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sdf version='1.9'>
+  <model name='teleaquah8_mono_cam'>
+
+    <!-- 1. 引入无人机本体 -->
+    <include merge='true'>
+      <uri>model://teleaquah8</uri>
+    </include>
+
+    <!-- 2. 引入相机，并告诉引擎初始生成的空间位置 (最好也加上 relative_to) -->
+    <include merge='true'>
+      <uri>model://mono_cam</uri>
+      <pose relative_to="base_link">0.22 0 -0.05 0 0 0</pose>
+    </include>
+
+    <!-- 3. 固定关节 (最关键的一步) -->
+    <joint name="CameraJoint" type="fixed">
+      <parent>base_link</parent>
+      <child>camera_link</child>
+      <!-- 👇 就是漏了这一行！这告诉物理引擎：这个关节死死地焊在 base_link 前方 0.22m 的位置 👇 -->
+      <pose relative_to="base_link">0.22 0 -0.05 0 0 0</pose>
+    </joint>
+
+  </model>
+</sdf>

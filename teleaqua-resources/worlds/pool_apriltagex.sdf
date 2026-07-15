@@ -1,0 +1,104 @@
+<?xml version="1.0" ?>
+<sdf version="1.9">
+  <world name="pool_apriltag">
+
+    <!-- ============================================== -->
+    <!-- 3. 环境与视觉渲染 (模拟水下蓝色迷雾) -->
+    <!-- ============================================== -->
+    <scene>
+      <ambient>0.4 0.6 0.8 1.0</ambient>
+      <background>0.0 0.4 0.7 1.0</background>
+      <grid>false</grid>
+      <!-- 添加线性雾，制造水下的朦胧感，这样相机的图像更逼真 -->
+      <fog>
+        <type>linear</type>
+        <color>0.0 0.4 0.7 1.0</color>
+        <density>0.1</density>
+        <start>1.0</start>
+        <end>15.0</end>
+      </fog>
+    </scene>
+
+    <light type="directional" name="sun">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>0.8 0.8 0.8 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <direction>-0.5 0.1 -0.9</direction>
+    </light>
+
+    <!-- ============================================== -->
+    <!-- 4. 泳池模型 (物理墙体 + 半透明水体) -->
+    <!-- ============================================== -->
+    <model name="swimming_pool">
+      <static>true</static>
+
+      <!-- 泳池底部 -->
+      <link name="pool_bottom">
+        <pose>0 0 -3.0 0 0 0</pose>
+        <collision name="collision">
+          <geometry><box><size>10 10 0.1</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>10 10 0.1</size></box></geometry>
+          <material>
+            <ambient>0.6 0.8 0.9 1</ambient>
+            <diffuse>0.6 0.8 0.9 1</diffuse>
+          </material>
+        </visual>
+      </link>
+
+      <!-- 泳池前墙 (X = 5.0) -->
+      <link name="pool_front_wall">
+        <pose>5.0 0 -1.5 0 0 0</pose>
+        <collision name="collision">
+          <geometry><box><size>0.1 10 3.0</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>0.1 10 3.0</size></box></geometry>
+          <material><ambient>0.3 0.6 0.8 1</ambient></material>
+        </visual>
+      </link>
+
+      <!-- 视觉上的“水体” (半透明蓝色立方体) -->
+      <link name="water_volume">
+        <pose>0 0 -1.5 0 0 0</pose>
+        <visual name="water_visual">
+          <geometry><box><size>9.8 9.8 3.0</size></box></geometry>
+          <material>
+            <ambient>0.0 0.5 0.8 0.3</ambient>
+            <diffuse>0.0 0.5 0.8 0.3</diffuse>
+            <specular>0.1 0.1 0.1 0.3</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ============================================== -->
+    <!-- 5. 挂在墙上的 AprilTag 目标码 (从 Gazebo Fuel 加载) -->
+    <!-- ============================================== -->
+    <include>
+      <uri>model://apriltag</uri>
+      <name>apriltag_0</name>
+      <!-- 把它挂在正前方 (X=3.0) 的水下 (-1.0米) -->
+      <!-- 绕 Y 轴旋转 -90 度 (-1.5707)，让二维码正对着你的无人机 (-X方向) -->
+      <pose>3.0 0 -1.0 0 -1.570796 0</pose>
+    </include>
+
+    <!-- （可选）在左边再挂一个 Tag 1 -->
+    <include>
+      <uri>model://apriltag</uri>
+      <name>apriltag_1</name>
+      <!-- 挂在左侧 (Y=3.0) 的水下 (-1.0米)，绕 X 轴旋转 90 度，对着 -Y 方向 -->
+      <pose>0 3.0 -1.0 1.570796 0 0</pose>
+    </include>
+
+    <spherical_coordinates>
+      <surface_model>EARTH_WGS84</surface_model>
+      <world_frame_orientation>ENU</world_frame_orientation>
+      <latitude_deg>47.397971057728974</latitude_deg>
+      <longitude_deg> 8.546163739800146</longitude_deg>
+      <elevation>0</elevation>
+    </spherical_coordinates>
+  </world>
+</sdf>

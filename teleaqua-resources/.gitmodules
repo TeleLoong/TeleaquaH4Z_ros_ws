@@ -1,0 +1,6 @@
+[submodule "plugins/hydrodynamics"]
+	path = plugins/hydrodynamics
+	url = https://github.com/caneatonly/zyshine3-Gazebo-HybridHydrodynamics.git
+[submodule "plugins/bidir_motor_model"]
+	path = plugins/bidir_motor_model
+	url = https://github.com/caneatonly/zyshine3-Gazebo-bidir_motor.git

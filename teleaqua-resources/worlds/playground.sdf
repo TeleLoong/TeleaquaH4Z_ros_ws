@@ -1,0 +1,358 @@
+<?xml version="1.0" ?>
+<sdf version="1.9">
+  <world name="playground">
+
+    <gravity>0 0 -9.81</gravity>
+
+    <physics name="1ms" type="ode">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+
+    <plugin
+      filename="gz-sim-physics-system"
+      name="gz::sim::systems::Physics">
+    </plugin>
+    <plugin
+      filename="gz-sim-user-commands-system"
+      name="gz::sim::systems::UserCommands">
+    </plugin>
+    <plugin
+      filename="gz-sim-scene-broadcaster-system"
+      name="gz::sim::systems::SceneBroadcaster">
+    </plugin>
+    <plugin
+      filename="gz-sim-contact-system"
+      name="gz::sim::systems::Contact">
+    </plugin>
+    <plugin
+      filename="gz-sim-imu-system"
+      name="gz::sim::systems::Imu">
+    </plugin>
+    <plugin
+      filename="gz-sim-air-pressure-system"
+      name="gz::sim::systems::AirPressure">
+    </plugin>
+    <plugin
+      filename="gz-sim-air-speed-system"
+      name="gz::sim::systems::AirSpeed">
+    </plugin>
+    <plugin
+      filename="gz-sim-apply-link-wrench-system"
+      name="gz::sim::systems::ApplyLinkWrench">
+    </plugin>
+    <plugin
+      filename="gz-sim-navsat-system"
+      name="gz::sim::systems::NavSat">
+    </plugin>
+    <plugin
+      filename="gz-sim-magnetometer-system"
+      name="gz::sim::systems::Magnetometer">
+    </plugin>
+    <plugin
+      filename="gz-sim-sensors-system"
+      name="gz::sim::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+    <plugin
+      filename="libOpticalFlowSystem.so"
+      name="custom::OpticalFlowSystem">
+    </plugin>
+    <plugin
+      filename="libGstCameraSystem.so"
+      name="custom::GstCameraSystem">
+    </plugin>
+    <plugin
+      filename="gz-sim-buoyancy-system"
+      name="gz::sim::systems::Buoyancy">
+      <graded_buoyancy>
+        <default_density>1000.0</default_density>
+        <density_change>
+          <above_depth>0.0</above_depth>
+          <density>1.225</density>
+        </density_change>
+      </graded_buoyancy>
+      <enable>teleaquah8_0</enable>
+      <enable>teleaquah8</enable>
+      <enable>teleaquah8</enable>
+      <enable>teleh4z_0</enable>
+      <enable>teleh4z</enable>
+      <enable>teleaquah8p_mono_cam</enable>
+      <enable>teleaquah8p_mono_cam_0</enable>
+
+    </plugin>
+
+    <scene>
+      <ambient>0.48 0.58 0.64 1.0</ambient>
+      <background>0.53 0.81 0.92 1.0</background>
+      <grid>false</grid>
+      <shadows>true</shadows>
+      <fog>
+        <type>linear</type>
+        <color>0.10 0.34 0.52 1.0</color>
+        <density>0.02</density>
+        <start>6.0</start>
+        <end>28.0</end>
+      </fog>
+    </scene>
+
+    <light type="directional" name="sun">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 80 0 0 0</pose>
+      <diffuse>0.95 0.95 0.90 1</diffuse>
+      <specular>0.25 0.25 0.25 1</specular>
+      <attenuation>
+        <range>3000</range>
+        <constant>0.9</constant>
+        <linear>0.01</linear>
+        <quadratic>0.001</quadratic>
+      </attenuation>
+      <direction>-0.35 0.15 -0.92</direction>
+    </light>
+
+    <model name="square_pool_20m">
+      <static>true</static>
+
+      <link name="pool_bottom">
+        <pose>0 0 -10.0 0 0 0</pose>
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>20.0 20.0 0.2</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>20.0 20.0 0.2</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.68 0.72 0.76 1</ambient>
+            <diffuse>0.68 0.72 0.76 1</diffuse>
+          </material>
+        </visual>
+      </link>
+
+      <link name="pool_wall_north">
+        <pose>0 10.1 -5.0 0 0 0</pose>
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>20.2 0.2 10.0</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>20.2 0.2 10.0</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.62 0.68 0.73 1</ambient>
+            <diffuse>0.62 0.68 0.73 1</diffuse>
+          </material>
+        </visual>
+      </link>
+
+      <link name="pool_wall_south">
+        <pose>0 -10.1 -5.0 0 0 0</pose>
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>20.2 0.2 10.0</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>20.2 0.2 10.0</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.62 0.68 0.73 1</ambient>
+            <diffuse>0.62 0.68 0.73 1</diffuse>
+          </material>
+        </visual>
+      </link>
+
+      <link name="pool_wall_east">
+        <pose>10.1 0 -5.0 0 0 0</pose>
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>0.2 20.0 10.0</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.2 20.0 10.0</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.62 0.68 0.73 1</ambient>
+            <diffuse>0.62 0.68 0.73 1</diffuse>
+          </material>
+        </visual>
+      </link>
+
+      <link name="pool_wall_west">
+        <pose>-10.1 0 -5.0 0 0 0</pose>
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>0.2 20.0 10.0</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.2 20.0 10.0</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.62 0.68 0.73 1</ambient>
+            <diffuse>0.62 0.68 0.73 1</diffuse>
+          </material>
+        </visual>
+      </link>
+
+      <link name="pool_reference_wall">
+        <pose>9.95 0 -1.8 0 0 0</pose>
+        <visual name="lane_panel">
+          <geometry>
+            <box>
+              <size>0.02 5.0 1.8</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.78 0.84 0.88 1</ambient>
+            <diffuse>0.78 0.84 0.88 1</diffuse>
+          </material>
+        </visual>
+      </link>
+
+      <link name="water_volume">
+        <pose>0 0 -5.0 0 0 0</pose>
+
+        <visual name="water_surface_visual">
+          <pose>0 0 5.0 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>19.8 19.8 0.01</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.14 0.46 0.68 0.38</ambient>
+            <diffuse>0.14 0.46 0.68 0.38</diffuse>
+            <specular>0.85 0.85 0.85 0.50</specular>
+            <emissive>0.01 0.02 0.03 0.05</emissive>
+          </material>
+        </visual>
+
+        <visual name="water_bottom_visual">
+          <pose>0 0 -5.0 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>19.8 19.8 0.02</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.10 0.35 0.55 0.28</ambient>
+            <diffuse>0.10 0.35 0.55 0.28</diffuse>
+            <specular>0.30 0.30 0.30 0.20</specular>
+          </material>
+        </visual>
+
+        <visual name="water_north_visual">
+          <pose>0 9.9 0 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>19.8 0.08 10.0</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.10 0.35 0.55 0.34</ambient>
+            <diffuse>0.10 0.35 0.55 0.34</diffuse>
+            <specular>0.30 0.30 0.30 0.24</specular>
+          </material>
+        </visual>
+
+        <visual name="water_south_visual">
+          <pose>0 -9.9 0 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>19.8 0.08 10.0</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.10 0.35 0.55 0.34</ambient>
+            <diffuse>0.10 0.35 0.55 0.34</diffuse>
+            <specular>0.30 0.30 0.30 0.24</specular>
+          </material>
+        </visual>
+
+        <visual name="water_east_visual">
+          <pose>9.9 0 0 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.08 19.8 10.0</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.10 0.35 0.55 0.34</ambient>
+            <diffuse>0.10 0.35 0.55 0.34</diffuse>
+            <specular>0.30 0.30 0.30 0.24</specular>
+          </material>
+        </visual>
+
+        <visual name="water_west_visual">
+          <pose>-9.9 0 0 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.08 19.8 10.0</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.10 0.35 0.55 0.34</ambient>
+            <diffuse>0.10 0.35 0.55 0.34</diffuse>
+            <specular>0.30 0.30 0.30 0.24</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <include>
+      <uri>model://apriltag</uri>
+      <name>apriltag_0</name>
+      <pose>9.8 0 -1.2 0 -1.570796 0</pose>
+    </include>
+
+    <include>
+      <uri>model://apriltag</uri>
+      <name>apriltag_1</name>
+      <pose>0 9.8 -1.4 1.570796 0 0</pose>
+    </include>
+
+    <include>
+      <uri>model://apriltag</uri>
+      <name>apriltag_2</name>
+      <pose>-9.8 -4.0 -2.0 0 1.570796 0</pose>
+    </include>
+
+    <spherical_coordinates>
+      <surface_model>EARTH_WGS84</surface_model>
+      <world_frame_orientation>ENU</world_frame_orientation>
+      <latitude_deg>47.397971057728974</latitude_deg>
+      <longitude_deg>8.546163739800146</longitude_deg>
+      <elevation>0</elevation>
+    </spherical_coordinates>
+
+  </world>
+</sdf>
