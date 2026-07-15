@@ -189,7 +189,7 @@ ros2 topic pub --once /teleh4z/mode_request std_msgs/msg/String "{data: 'water'}
 - `arm_motion_timeout`：机械臂动作超时，默认 `8.0`。
 - `px4_switch_timeout`：PX4 模式切换超时，默认 `5.0`。
 
-水下手柄旁路、QGC 手柄按钮映射和完整启动流程见 [teleaqua-resources/环境搭建指南.md](teleaqua-resources/环境搭建指南.md)。
+水下手柄旁路、QGC 手柄按钮映射和完整启动流程见 [环境搭建指南.md](环境搭建指南.md)。
 
 ## 上传前检查
 
