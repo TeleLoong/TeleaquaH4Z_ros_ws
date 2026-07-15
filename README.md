@@ -6,7 +6,7 @@
 - `teleaqua-resources/` 存放 Gazebo 模型、世界文件、自定义插件、PX4 airframe、实验脚本和一键启动脚本。
 
 > [!TIP]
-> 新电脑部署、Docker 启动、插件编译、PX4/ROS 2 启动流程请优先阅读 [teleaqua-resources/环境搭建指南.md](teleaqua-resources/环境搭建指南.md)。
+> 新电脑部署、Docker 启动、插件编译、PX4/ROS 2 启动流程请优先阅读 [环境搭建指南.md](环境搭建指南.md)。
 
 ## 快速启动
 
